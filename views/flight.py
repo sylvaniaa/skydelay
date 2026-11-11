@@ -977,7 +977,6 @@ def render_flight():
     for o in o_codes:
         dests += [c for c in au_dest.get(o, []) if c not in dests and c not in o_codes]
     _seen = set(dests)
-    dests += [c for c in origins if c not in _seen and c not in o_codes]   # any airport: Ignav sells connections we have no schedule for
     if not dests:
         st.info("No regular flights from here in the schedule.")
         return
