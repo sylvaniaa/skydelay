@@ -166,6 +166,8 @@ td.busy .bt{font-weight:700;font-size:15px;}
 .topnav .tn-go:hover{background:#EEF5FA;}
 .hdr,.brand,.cta{display:none !important;}
 body.pastland .topnav{background:#12284B;border-color:#12284B;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 6px 20px rgba(18,40,75,.18);}
+.scue{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:13;display:flex;align-items:center;gap:8px;background:#12284B;color:#fff;border:none;border-radius:999px;padding:12px 22px;font:700 14px 'Plus Jakarta Sans',-apple-system,sans-serif;letter-spacing:.04em;cursor:pointer;box-shadow:0 8px 24px rgba(18,40,75,.28);animation:scb 1.8s ease-in-out infinite;transition:opacity .3s}
+@keyframes scb{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,7px)}} body.pastland .scue{opacity:0;pointer-events:none} @media (prefers-reduced-motion:reduce){.scue{animation:none}}
 @media (max-width:700px){.topnav{gap:16px;padding:0 8px 0 16px;}.topnav a{font-size:11px;letter-spacing:.08em;}}
 #reveal{position:fixed;inset:0;z-index:60;background:#F3F8FB;clip-path:circle(0px at 50% 50%);pointer-events:none;
   display:flex;align-items:center;justify-content:center;transition:clip-path .7s cubic-bezier(.7,0,.3,1);}
@@ -192,7 +194,7 @@ body.pastland .topnav{background:#12284B;border-color:#12284B;backdrop-filter:no
     </div>
   </div>
 
-  <div id="sheet"><div id="landing"><nav class="topnav">
+  <div id="sheet"><div id="landing"><button class="scue" id="scue" onclick="document.querySelector('.topnav a').click()">Explore airports <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><nav class="topnav">
     <span class="tn-b" onclick="document.getElementById('sheet').scrollTo({top:0,behavior:'smooth'})">skydelay</span>
     <a onclick="var sh=document.getElementById('sheet');sh.scrollTo({top:document.getElementById('panel').offsetTop-window.innerHeight*0.62,behavior:'smooth'});try{map.easeTo({padding:{top:110,bottom:Math.round(window.innerHeight*0.38),left:0,right:0},duration:700});}catch(e){}">Airports</a>
     <button class="tn-go" onclick="window.parent.postMessage({isStreamlitMessage:true,type:'streamlit:setComponentValue',dataType:'json',value:{qp:{page:'predict'},t:Date.now()}},'*')">Check a flight</button>
