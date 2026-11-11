@@ -19,6 +19,7 @@ html, body, .stApp, [data-testid="stMarkdownContainer"],
 .block-container { padding-top: 1rem; max-width: 1280px; }
 
 .stApp{overflow-x:hidden;background:#F3F8FB;}
+[data-testid="stSidebarCollapsedControl"],[data-testid="collapsedControl"],[data-testid="stExpandSidebarButton"],[data-testid="stSidebar"]{display:none !important;}
 .topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:#12284B;
   border-radius:999px;height:56px;padding:0 28px;margin:14px 0 10px 0;}
 [data-testid="stMainBlockContainer"], .block-container{padding-top:0 !important;}

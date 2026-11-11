@@ -4,6 +4,7 @@
 :root{--navy:#14284B;--mint:#5DCAA5;--mint2:#9FE1CB}
 *{box-sizing:border-box;margin:0}
 html,body{background:transparent;font-family:'Plus Jakarta Sans',sans-serif}
+body{padding-top:16px}
 .cc{background:var(--navy);border-radius:28px;padding:36px 40px;color:#fff;font-variant-numeric:tabular-nums}
 .top{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:24px;align-items:center}
 .lab{font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--mint2);display:flex;gap:8px;align-items:center}
@@ -23,7 +24,7 @@ html,body{background:transparent;font-family:'Plus Jakarta Sans',sans-serif}
 .tl{font-size:15px;font-weight:400;margin-top:2px}
 @keyframes o{to{transform:rotate(360deg)}}
 @keyframes p{50%{opacity:.35}}
-@media (max-width:640px){.cc{padding:24px 20px;border-radius:22px}.top{grid-template-columns:1fr}.globe{display:none}.tiles{grid-template-columns:1fr!important}}
+@media (max-width:640px){.cc{padding:24px 20px;border-radius:22px}.top{grid-template-columns:1fr}.globe{margin:6px auto 0}.tiles{grid-template-columns:1fr!important}}
 @media (prefers-reduced-motion:reduce){.orb,.dot{animation:none}}
 </style></head><body>
 <div class="cc" id="cc" style="visibility:hidden">
