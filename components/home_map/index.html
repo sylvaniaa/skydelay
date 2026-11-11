@@ -1,0 +1,640 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;font-family:'Schibsted Grotesk',-apple-system,sans-serif;}
+html,body{margin:0;height:100%;}
+body{overflow:hidden;background:#92D2F7;}
+#map{position:fixed;inset:0;}
+.maplibregl-ctrl-bottom-right{top:86px;bottom:auto !important;right:14px;}
+.hdr{position:fixed;top:0;left:0;right:0;height:92px;z-index:15;background:#F3F8FB;border-bottom:1px solid #E2E6EC;
+  opacity:0;pointer-events:none;transition:opacity .2s;}
+body.docked .hdr{opacity:1;pointer-events:auto;}
+.brand{position:fixed;top:20px;left:20px;z-index:20;background:#12284B;color:#fff;border-radius:999px;padding:12px 24px;font-family:Plus Jakarta Sans,-apple-system,sans-serif;font-weight:700;font-size:20px;letter-spacing:-.04em;line-height:1;box-shadow:0 6px 20px rgba(18,40,75,.18);}
+.brand i{width:34px;height:34px;border-radius:10px;background:#12284B;color:#fff;font-style:normal;font-weight:700;font-size:14px;
+  display:flex;align-items:center;justify-content:center;}
+body.docked .brand{box-shadow:none;}
+.cta{display:none;position:fixed;top:20px;right:20px;z-index:20;background:#12284B;color:#fff;border:none;border-radius:999px;
+  padding:14px 22px;font-weight:700;font-size:15px;cursor:pointer;}
+body.docked .cta{display:block;}
+.cta:hover{background:#2E3E5C;}
+
+/* ---------- hero: flight search ---------- */
+.hero{position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:12;width:min(880px,calc(100% - 40px));background:#fff;
+  border-radius:24px;box-shadow:0 10px 36px rgba(11,31,51,.2);padding:20px 22px 18px 22px;transition:opacity .2s;}
+body.covered .hero{opacity:0;pointer-events:none;}
+.h1{font-family:Plus Jakarta Sans,-apple-system,sans-serif;font-size:30px;font-weight:700;color:#111418;letter-spacing:-.03em;line-height:1.1;}
+.fs{display:flex;gap:8px;margin-top:14px;align-items:stretch;}
+.fld{flex:1;position:relative;background:#E9F1F7;border-radius:14px;padding:8px 14px;min-width:0;}
+.fld label{display:block;font-size:13px;font-weight:500;color:#6B7883;}
+.fld input{border:none;background:transparent;outline:none;font-size:16px;font-weight:600;color:#111418;width:100%;padding:3px 0 1px 0;}
+.fld:not(.date) input{padding-right:52px;text-overflow:ellipsis;}
+.fld input::placeholder{color:#111418;font-weight:500;}
+.fld.date{flex:0 0 175px;}
+.fld.err{box-shadow:inset 0 0 0 2px #D2483A;}
+.go{flex:0 0 auto;border:none;background:#0055A0;color:#fff;font-weight:700;font-size:16px;border-radius:14px;padding:0 24px;cursor:pointer;}
+.go:hover{background:#00447F;}
+.ch{background:#E9F1F7;color:#111418;border-radius:6px;padding:4px 8px;font-size:13px;font-weight:500;flex:none;}
+.fchip{display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);background:#fff;}
+
+/* ---------- dropdowns ---------- */
+.dd{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border-radius:16px;z-index:40;
+  box-shadow:0 12px 32px rgba(11,31,51,.18);max-height:330px;overflow:auto;padding:6px;}
+.dd .it{padding:10px 12px;border-radius:10px;cursor:pointer;display:flex;gap:12px;align-items:center;}
+.dd .it:hover,.dd .it.act{background:#EEF5FA;}
+.fld .dd{right:auto;width:max(100%,400px);border:1px solid #DDE3EA;}
+.fld .dd .it{padding:9px 10px;}
+.fld .dd .it.sub{padding-left:40px;}
+.ic{width:24px;height:24px;flex:none;color:#111418;}
+.tx{flex:1;min-width:0;}
+.t1{font-weight:600;color:#111418;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2{color:#111418;font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+mark{background:none;color:#0055A0;}
+.ddempty{color:#111418;padding:14px;font-size:14px;}
+#sres .it b{min-width:44px;color:#111418;}
+#sres .it span{color:#111418;font-size:14px;}
+#sres .it i{margin-left:auto;font-style:normal;color:#111418;font-size:12px;}
+
+#tip{position:fixed;z-index:40;pointer-events:none;width:260px;background:#fff;border-radius:12px;border:1px solid #D3DCE6;
+  box-shadow:0 6px 20px rgba(18,40,75,.16);padding:12px 14px;opacity:0;transition:opacity .12s;}
+#tip.on{opacity:1;}
+#tip:after{content:"";position:absolute;left:var(--ax,50%);bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#fff;}
+#tip.below:after{bottom:auto;top:-7px;border:7px solid transparent;border-top:0;border-bottom-color:#fff;}
+.tp-c{display:inline-block;background:#DCEAF6;color:#003F7A;font-weight:700;font-size:12px;padding:2px 8px;border-radius:999px;margin-bottom:6px;}
+.tp-n{font-weight:700;font-size:15px;color:#111418;line-height:1.3;}
+.tp-l{font-size:12.5px;color:#111418;margin:3px 0 10px;}
+.tp-f{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #E2E6EC;padding-top:8px;}
+.tp-v{font-size:17px;font-weight:700;color:#111418;line-height:1.2;}
+.tp-s{font-size:11.5px;color:#111418;}
+.tp-b{font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:999px;}
+.mk{display:flex;flex-direction:column;align-items:center;cursor:pointer;}
+.mk .d{border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(11,31,51,.35);}
+.mk .lb{margin-top:3px;background:#fff;border-radius:999px;padding:2px 8px;font-weight:700;font-size:12px;color:#111418;
+  box-shadow:0 2px 8px rgba(11,31,51,.22);white-space:nowrap;}
+.mk.nolab .lb{display:none;}
+.mk:hover .lb{display:block;}
+
+/* ---------- panel: explore airports ---------- */
+#sheet{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;z-index:10;pointer-events:none;scrollbar-width:none;}
+#sheet::-webkit-scrollbar{display:none;}
+#panel{pointer-events:auto;position:relative;z-index:10;width:calc(100% - 80px);max-width:1400px;margin:72vh auto 0 auto;
+  background:#fff;border-radius:28px 28px 0 0;box-shadow:0 -10px 40px rgba(11,31,51,.16);padding:16px 40px 48px 40px;min-height:100vh;
+  transition:width .25s ease,max-width .25s ease,border-radius .25s ease,box-shadow .25s ease;}
+body.docked #panel{width:100%;max-width:100%;border-radius:0;box-shadow:none;}
+.grab{width:46px;height:5px;border-radius:3px;background:#D5DEE8;margin:0 auto 22px auto;}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+.pt{font-family:Plus Jakarta Sans,-apple-system,sans-serif;font-size:40px;font-weight:700;color:#111418;letter-spacing:-.03em;line-height:1.05;}
+.psub{color:#111418;font-size:15px;margin-top:8px;}
+.sbox{width:min(380px,100%);position:relative;margin-top:6px;}
+.sbox svg{position:absolute;left:16px;top:13px;width:20px;height:20px;color:#111418;}
+.sbox input{width:100%;border:none;border-radius:999px;padding:13px 18px 13px 46px;font-size:15px;color:#111418;outline:none;background:#E9F1F7;}
+.regsel{display:inline-block;position:relative;margin-top:10px;}
+#regbtn{border:none;background:transparent;font-size:26px;font-weight:700;color:#111418;cursor:pointer;display:flex;align-items:center;
+  gap:8px;padding:4px 14px;margin-left:-14px;border-radius:14px;transition:background .15s;}
+#regbtn:hover,.regsel.open #regbtn{background:#E9F1F7;}
+#regbtn svg{width:20px;height:20px;}
+.regmenu{display:none;position:absolute;top:54px;left:-14px;min-width:300px;background:#fff;border-radius:18px;
+  box-shadow:0 14px 36px rgba(11,31,51,.16);border:1px solid #E8F1F8;padding:8px;z-index:30;}
+.regsel.open .regmenu{display:block;}
+.ro{padding:13px 16px;border-radius:12px;font-size:18px;font-weight:600;color:#111418;cursor:pointer;display:flex;
+  justify-content:space-between;align-items:center;}
+.ro:hover{background:#EEF5FA;color:#111418;}
+.ro.sel{color:#111418;font-weight:700;background:#EEF5FA;}
+.ro.sel::after{content:"✓";width:22px;height:22px;border-radius:50%;background:#8CC1E9;color:#fff;font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;}
+table{width:100%;border-collapse:separate;border-spacing:0;margin-top:26px;}
+th{text-align:left;color:#111418;font-weight:600;font-size:15px;padding:12px;border-bottom:1px solid #E2E6EC;white-space:nowrap;}
+td{padding:15px 12px;font-size:16px;color:#111418;white-space:nowrap;}
+tbody tr{cursor:pointer;}
+tbody tr:nth-child(even) td{background:#F7FAFC;}
+tbody tr:hover td{background:#EAF2F8;}
+tbody tr.hl td{background:#DCEAF6;}
+td:first-child{border-radius:12px 0 0 12px;}
+td:last-child{border-radius:0 12px 12px 0;}
+.c{font-weight:700;}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:14px;vertical-align:middle;}
+.an{display:inline-block;max-width:300px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;margin-left:16px;color:#111418;font-weight:500;}
+td.busy{position:relative;}
+td.busy .bt{font-weight:700;font-size:15px;}
+.sm{color:#111418;font-size:13px;font-weight:600;}
+.wi{font-size:18px;margin-right:6px;vertical-align:-2px;}
+.wt{color:#111418;font-size:14px;}
+.al{display:block;color:#D2483A;font-size:12px;font-weight:700;margin-top:2px;}
+.na{color:#B8C3D1;}
+.empty{color:#111418;padding:24px 12px;}
+.note{color:#111418;font-size:13px;margin-top:14px;}
+.more{margin-top:16px;border:1px solid #D5DEE8;background:#fff;border-radius:999px;padding:10px 18px;font-weight:600;font-size:14px;color:#111418;cursor:pointer;}
+.more:hover{background:#EEF5FA;}
+.wxw{display:inline-flex;flex-direction:column;align-items:center;}
+@media (max-width:900px){.hide-s{display:none;}.pt{font-size:30px;}#panel{width:calc(100% - 24px);padding:14px 18px 40px 18px;}
+  .cta{padding:11px 14px;font-size:13px;}
+  .hero{padding:16px;}.h1{font-size:24px;}.fs{flex-wrap:wrap;}
+  .fld,.fld.date{flex:1 1 calc(50% - 4px);}.go{flex:1 1 calc(50% - 4px);padding:12px;}
+  .fld .dd{width:calc(100vw - 72px);}}
+#landing{pointer-events:auto;position:relative;height:100vh;min-height:620px;
+  background:#3F7FBF url("hero_flat.png") center bottom/cover no-repeat;}
+#landing .hero{position:absolute;top:calc(50% + 40px);transform:translate(-50%,-50%);}
+#how{pointer-events:auto;background:#F3F8FB;padding:56px 40px 72px;font-family:Plus Jakarta Sans,-apple-system,sans-serif;}
+#how .hw-t{text-align:center;font-size:34px;font-weight:700;color:#111418;letter-spacing:-.03em;}
+#how .hw-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;max-width:1100px;margin:34px auto 0;}
+#how .hw-c{background:#fff;border-radius:22px;padding:26px 26px 24px;border:1px solid #E2E6EC;}
+#how .hw-c.dk{background:#12284B;border-color:#12284B;}
+#how .hw-n{font-size:14px;font-weight:700;color:#0055A0;}
+#how .hw-c.dk .hw-n{color:#8CC1E9;}
+#how .hw-h{font-size:22px;font-weight:700;color:#111418;margin-top:6px;letter-spacing:-.02em;}
+#how .hw-c.dk .hw-h{color:#fff;}
+#how .hw-big{font-size:44px;font-weight:700;color:#111418;letter-spacing:-.03em;margin-top:22px;line-height:1;}
+#how .hw-c.dk .hw-big{color:#fff;}
+#how .hw-s{font-size:14px;color:#111418;margin-top:6px;}
+#how .hw-c.dk .hw-s{color:#A9D4EA;}
+#how .hw-p{display:flex;gap:8px;flex-wrap:wrap;margin-top:26px;}
+#how .hw-p span{font-size:13px;font-weight:700;padding:6px 12px;border-radius:8px;}
+@media (max-width:700px){#how{padding:40px 18px 56px;}#landing .hero{top:16vh;transform:translateX(-50%);}}
+.topnav{position:fixed;transition:background .25s,border-color .25s;top:18px;left:50%;transform:translateX(-50%);width:min(1200px,calc(100% - 40px));
+  height:62px;box-sizing:border-box;display:flex;align-items:center;gap:30px;padding:0 12px 0 26px;z-index:13;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);border-radius:18px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-family:Plus Jakarta Sans,-apple-system,sans-serif;}
+.topnav .tn-b{color:#fff;font-weight:700;font-size:22px;letter-spacing:-.04em;margin-right:auto;cursor:pointer;}
+.topnav a{color:#fff;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;
+  text-decoration:none;opacity:.9;}
+.topnav a:hover{opacity:1;}
+.topnav .tn-go{background:#fff;color:#111418;border:none;border-radius:12px;padding:11px 20px;font-weight:700;
+  font-size:14px;cursor:pointer;font-family:inherit;}
+.topnav .tn-go:hover{background:#EEF5FA;}
+.hdr,.brand,.cta{display:none !important;}
+body.pastland .topnav{background:#12284B;border-color:#12284B;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 6px 20px rgba(18,40,75,.18);}
+@media (max-width:700px){.topnav{gap:16px;padding:0 8px 0 16px;}.topnav a{font-size:11px;letter-spacing:.08em;}}
+#reveal{position:fixed;inset:0;z-index:60;background:#F3F8FB;clip-path:circle(0px at 50% 50%);pointer-events:none;
+  display:flex;align-items:center;justify-content:center;transition:clip-path .7s cubic-bezier(.7,0,.3,1);}
+#reveal.on{pointer-events:auto;}
+#rvcode{font-family:Plus Jakarta Sans,-apple-system,sans-serif;font-size:72px;font-weight:700;letter-spacing:-.04em;color:#0055A0;
+  opacity:0;transform:translateY(8px);transition:opacity .3s ease .4s,transform .3s ease .4s;}
+#reveal.on #rvcode{opacity:1;transform:none;}
+</style></head>
+<body>
+  <div id="map"></div>
+  <div class="hdr"></div>
+  <div class="brand">skydelay</div>
+  <button class="cta" id="cta">✈ Check a flight</button>
+
+  <div class="hero" id="hero">
+    <div class="h1">Will your flight be delayed?</div>
+    <div class="fs">
+      <div class="fld"><label for="orig">From</label><input id="orig" placeholder="City or airport" autocomplete="off">
+        <span class="ch fchip" id="origchip"></span><div class="dd" id="origdd"></div></div>
+      <div class="fld"><label for="dest">To</label><input id="dest" placeholder="City or airport" autocomplete="off">
+        <span class="ch fchip" id="destchip"></span><div class="dd" id="destdd"></div></div>
+      <div class="fld date"><label for="date">Date</label><input id="date" type="date"></div>
+      <button class="go" id="go">Check delay risk</button>
+    </div>
+  </div>
+
+  <div id="sheet"><div id="landing"><nav class="topnav">
+    <span class="tn-b" onclick="document.getElementById('sheet').scrollTo({top:0,behavior:'smooth'})">skydelay</span>
+    <a onclick="var sh=document.getElementById('sheet');sh.scrollTo({top:document.getElementById('panel').offsetTop-window.innerHeight*0.62,behavior:'smooth'});try{map.easeTo({padding:{top:110,bottom:Math.round(window.innerHeight*0.38),left:0,right:0},duration:700});}catch(e){}">Airports</a>
+    <a onclick="document.getElementById('sheet').scrollTo({top:0,behavior:'smooth'})">About</a>
+    <button class="tn-go" onclick="window.parent.postMessage({isStreamlitMessage:true,type:'streamlit:setComponentValue',dataType:'json',value:{qp:{page:'predict'},t:Date.now()}},'*')">Check a flight</button>
+  </nav></div>
+  <script>(function(){var sh=document.getElementById("sheet"),ld=document.getElementById("landing");
+    function f(){document.body.classList.toggle("pastland",sh.scrollTop>ld.offsetHeight*0.35);}
+    sh.addEventListener("scroll",f,{passive:true});f();})();</script>
+  <script>document.getElementById("landing").appendChild(document.getElementById("hero"));</script>
+  <div id="panel">
+    <div class="grab"></div>
+    <div class="ph">
+      <div><div class="pt">Explore airports</div>
+        <div class="psub">How busy are the major airports, and how often do their flights leave late? Tap one for details.</div></div>
+      <div class="sbox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" placeholder="Search airports or cities..." autocomplete="off"><div class="dd" id="sres"></div>
+      </div>
+    </div>
+    <div class="regsel" id="regsel"><button id="regbtn"><span id="reglbl">North America</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="regmenu" id="regmenu"><div class="ro" data-v="ALL">All</div><div class="ro" data-v="US">North America</div>
+      <div class="ro" data-v="EU">Europe</div><div class="ro" data-v="IN">India</div><div class="ro" data-v="AU">Australia</div></div></div>
+    <table><thead><tr><th>Airport</th><th class="hide-s">City</th><th>Busy</th><th>Departure delays</th><th class="hide-s">Weather</th></tr></thead>
+      <tbody id="tb"></tbody></table>
+    <button class="more" id="more"></button>
+    <div class="note" id="note"></div>
+  </div></div>
+<div id="reveal"><div id="rvcode"></div></div>
+<script>
+const ST = (t, e) => window.parent.postMessage(Object.assign({isStreamlitMessage: true, type: t}, e || {}), "*");
+const BUSY = ["#3E9A5D", "#3E9A5D", "#E8B53A", "#D2483A"];
+const BUSYTXT = ["Quiet", "Moderate", "Busy", "Very busy"];
+const SIZE = [10, 13, 17, 22];
+const REG = {ALL: [[-130, -45], [155, 62]], US: [[-125, 24], [-66, 50]], EU: [[-11, 35], [32, 60]], IN: [[68, 7], [93, 33]],
+             AU: [[113, -44], [154, -11]]};
+const RNAME = {ALL: "All", US: "North America", EU: "Europe", IN: "India", AU: "Australia"};
+const WX = {};
+let A = [], map = null, marks = [], hl = null, started = false, hits = [], act = 0, curReg = "US", lastVis = [], showAll = false;
+let FROM = [], TO = [], REACH = {};
+const MAJOR = {
+  US: ["ATL", "LAX", "JFK", "ORD", "DFW", "DEN", "SFO", "IAD", "MIA", "SEA"],
+  EU: ["LHR", "CDG", "AMS", "FRA", "IST", "MAD", "BCN", "MUC", "FCO", "ZRH"],
+  IN: ["DEL", "BOM", "BLR", "HYD", "MAA", "CCU", "COK", "AMD", "GOI", "PNQ"],
+  AU: ["SYD", "MEL", "BNE", "PER", "ADL", "CBR", "OOL", "CNS", "HBA", "DRW"],
+  ALL: ["JFK", "LAX", "ATL", "ORD", "LHR", "CDG", "AMS", "FRA", "IST", "DEL", "SYD"]};
+function shown() {
+  if (showAll) return lastVis.slice(0, 60);
+  const reg = curReg || "ALL";
+  return MAJOR[reg].map(c => A.find(a => a.code === c && (reg === "ALL" || a.region === reg))).filter(Boolean);
+}
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const norm = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const send = qp => ST("streamlit:setComponentValue", {value: {qp: qp, t: Date.now()}, dataType: "json"});
+const heroB = () => $("hero").offsetTop + $("hero").offsetHeight;
+const pad = () => ({top: Math.round(Math.min(heroB() + 16, window.innerHeight * 0.45)),
+                    bottom: Math.round(window.innerHeight * 0.40), left: 60, right: 60});
+function isoPlus(n) {
+  const t = new Date(); t.setDate(t.getDate() + n);
+  return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+}
+
+/* ---------- flight search (same options + icons as the Check a flight picker) ---------- */
+const CITY = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21h18M5 21V9l6-3v15M11 21V4l8 4v13M14 10h2M14 14h2M14 18h2M7.5 12h1M7.5 16h1"/></svg>';
+const PLANE = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 16.5l20-6.5-2-2-7 2L8 4H6l2.5 7.2L5 12.5 3 11H2l1 3.2z"/><path d="M3 21h18"/></svg>';
+function hlt(text, qq) {
+  if (!qq) return esc(text);
+  const i = norm(text).indexOf(qq);
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + qq.length)) + "</mark>" + esc(text.slice(i + qq.length));
+}
+const F = {};
+function reachable() {
+  const o = F.orig && F.orig.sel;
+  if (!o) return null;
+  const R = new Set();
+  o.members.forEach(m => (REACH[m] || []).forEach(x => R.add(x)));
+  o.members.forEach(m => R.delete(m));
+  return R;
+}
+function toOpts() {
+  const R = reachable();
+  return TO;
+}
+function setupField(name, next, getOpts) {
+  const inp = $(name), dd = $(name + "dd"), chip = $(name + "chip");
+  const s = F[name] = {shown: [], act: -1, sel: null};
+  s.show = () => {
+    const qq = s.sel ? "" : norm(inp.value.trim());
+    const all = getOpts();
+    s.shown = qq ? all.filter(o => o.search.indexOf(qq) >= 0) : all;
+    const cities = new Set(s.shown.filter(o => o.kind === "city").map(o => o.value));
+    dd.innerHTML = s.shown.slice(0, 250).map((o, i) =>
+      `<div class="it${o.sub && cities.has(o.parent) ? " sub" : ""}${i === s.act ? " act" : ""}" data-i="${i}">` +
+      (o.kind === "city" ? CITY : PLANE) +
+      `<div class="tx"><div class="t1">${hlt(o.t1, qq)}</div><div class="t2">${hlt(o.t2, qq)}</div></div>` +
+      `<span class="ch">${esc(o.chip)}</span></div>`).join("") || '<div class="ddempty">No matching city or airport</div>';
+    dd.style.display = "block";
+    dd.style.left = "";
+    const over = dd.getBoundingClientRect().right - (window.innerWidth - 12);
+    if (over > 0) dd.style.left = (-over) + "px";
+    const a = dd.querySelector(".it.act");
+    if (a) a.scrollIntoView({block: "nearest"});
+  };
+  s.choose = (o, move) => {
+    if (!o) return;
+    s.sel = o;
+    inp.value = o.t1;
+    chip.textContent = o.chip;
+    chip.style.display = "inline-block";
+    dd.style.display = "none";
+    inp.parentNode.classList.remove("err");
+    if (s.onPick) s.onPick(o);
+    if (move && next) $(next).focus();
+  };
+  s.clear = () => { s.sel = null; inp.value = ""; chip.style.display = "none"; };
+  inp.addEventListener("focus", () => { inp.select(); s.act = -1; s.show(); dd.scrollTop = 0; });
+  inp.addEventListener("input", () => {
+    s.sel = null; chip.style.display = "none";
+    s.act = inp.value.trim() ? 0 : -1;
+    s.show(); dd.scrollTop = 0;
+  });
+  inp.addEventListener("keydown", e => {
+    const open = dd.style.display === "block" && s.shown.length;
+    if (e.key === "ArrowDown" && open) { s.act = Math.min(s.act + 1, s.shown.length - 1); s.show(); e.preventDefault(); }
+    else if (e.key === "ArrowUp" && open) { s.act = Math.max(s.act - 1, 0); s.show(); e.preventDefault(); }
+    else if (e.key === "Enter") {
+      if (open && !s.sel) s.choose(s.shown[s.act >= 0 ? s.act : 0], true); else if (open && s.act >= 0) s.choose(s.shown[s.act], true); else submit();
+      e.preventDefault();
+    }
+    else if (e.key === "Escape") { dd.style.display = "none"; }
+  });
+  inp.addEventListener("blur", () => setTimeout(() => {
+    dd.style.display = "none";
+    if (!s.sel && inp.value.trim() && s.shown.length) s.choose(s.shown[0], false);
+  }, 150));
+  dd.addEventListener("mousedown", e => {
+    const it = e.target.closest(".it");
+    if (it && it.dataset.i) { e.preventDefault(); s.choose(s.shown[+it.dataset.i], true); }
+  });
+}
+function submit() {
+  const o = F.orig.sel, d = F.dest.sel;
+  let bad = false;
+  if (!o) { $("orig").parentNode.classList.add("err"); bad = true; }
+  if (!d) { $("dest").parentNode.classList.add("err"); bad = true; }
+  if (bad) return;
+  let to = d.value;
+  const R = reachable();
+  if (R && d.kind === "city") {            // a city with only one reachable airport -> send that airport
+    const r = d.members.filter(m => R.has(m));
+    if (r.length === 1) to = r[0];
+  }
+  send({page: "predict", from: o.value, to: to, date: $("date").value || isoPlus(7)});
+}
+setupField("orig", "dest", () => FROM);
+setupField("dest", "date", toOpts);
+F.orig.onPick = () => {
+  const d = F.dest.sel;
+  if (d && !toOpts().some(t => t.value === d.value)) F.dest.clear();
+};
+$("date").min = isoPlus(0);
+$("date").value = isoPlus(7);
+$("go").addEventListener("click", submit);
+
+/* ---------- airports table + map ---------- */
+function wmo(c) {
+  if (c == null) return ["", ""];
+  if (c === 0) return ["Clear", "☀️"];
+  if (c <= 2) return ["Partly cloudy", "⛅"];
+  if (c === 3) return ["Cloudy", "☁️"];
+  if (c === 45 || c === 48) return ["Fog", "🌫️"];
+  if (c >= 51 && c <= 57) return ["Drizzle", "🌦️"];
+  if ((c >= 61 && c <= 67) || (c >= 80 && c <= 82)) return ["Rain", "🌧️"];
+  if ((c >= 71 && c <= 77) || c === 85 || c === 86) return ["Snow", "❄️"];
+  if (c >= 95) return ["Thunderstorms", "⛈️"];
+  return ["Mixed", "🌤️"];
+}
+function wxCell(a) {
+  const w = WX[a.region + a.code];
+  if (w === undefined) return '<span class="na">…</span>';
+  if (!w) return '<span class="na">—</span>';
+  const c = w.weather_code, tw = wmo(c), al = [];
+  if (c >= 95) al.push("Thunderstorms");
+  if ((w.wind_gusts_10m || 0) >= 55) al.push("Strong winds");
+  if ((c >= 71 && c <= 77) || c === 85 || c === 86) al.push("Snow");
+  if (c === 45 || c === 48) al.push("Low visibility");
+  return `<span class="wxw"><span><span class="wi">${tw[1]}</span><b>${Math.round(w.temperature_2m)}°</b> ` +
+    `<span class="wt">${tw[0]}</span></span>` + (al.length ? `<span class="al">${al.join(" · ")}</span>` : "") + `</span>`;
+}
+function dcell(a) {
+  if (a.dep_ontime == null) return '<span class="na">—</span>';
+  const v = Math.max(0, 1 - a.dep_ontime - (a.dep_cancel || 0));
+  const col = v < 0.2 ? "#3E9A5D" : v < 0.3 ? "#C9921E" : "#D2483A";
+  return `<b style="color:${col}">${Math.round(v * 100)}%</b>` +
+    (a.dep_delay == null ? (a.region === "IN" ? ' <span class="sm">est.</span>' : "")
+                         : ` <span class="sm">avg ${Math.max(0, Math.round(a.dep_delay))}m</span>`);
+}
+function rows() {
+  $("tb").innerHTML = shown().map(a => {
+    const k = a.region + a.code, c = BUSY[a.busy_level];
+    return `<tr class="${k === hl ? "hl" : ""}" data-k="${k}">` +
+      `<td><span class="dot" style="background:${c};box-shadow:0 0 0 5px ${c}26"></span><span class="c">${esc(a.code)}</span>` +
+      `<span class="an hide-s">${esc(a.name)}</span></td><td class="hide-s">${esc(a.city)}</td>` +
+      `<td class="busy"><span class="bt" style="color:${c}">${BUSYTXT[a.busy_level]}</span></td>` +
+      `<td>${dcell(a)}</td><td class="hide-s">${wxCell(a)}</td></tr>`;
+  }).join("") || '<tr><td colspan="5" class="empty">No airports in this part of the map. Drag or zoom out.</td></tr>';
+  const mb = $("more");
+  mb.style.display = lastVis.length ? "inline-block" : "none";
+  mb.textContent = showAll ? "Show major airports only" : "Show all " + lastVis.length + " airports in view";
+}
+async function loadWx() {
+  const need = shown().filter(a => !((a.region + a.code) in WX));
+  if (!need.length) return;
+  need.forEach(a => { WX[a.region + a.code] = undefined; });
+  try {
+    const url = "https://api.open-meteo.com/v1/forecast?latitude=" + need.map(a => a.lat.toFixed(3)).join(",") +
+      "&longitude=" + need.map(a => a.lon.toFixed(3)).join(",") + "&current=temperature_2m,weather_code,wind_gusts_10m";
+    const j = await (await fetch(url)).json();
+    (Array.isArray(j) ? j : [j]).forEach((d, i) => { WX[need[i].region + need[i].code] = d.current || null; });
+  } catch (e) {
+    need.forEach(a => { WX[a.region + a.code] = null; });
+  }
+  rows();
+}
+const BUSYDK = ["#2E7A48", "#2E7A48", "#8A5A08", "#A3322A"];
+function tipShow(a, el) {
+  let t = $("tip");
+  if (!t) { t = document.createElement("div"); t.id = "tip"; document.body.appendChild(t); }
+  const c = BUSY[a.busy_level], loc = [a.city, a.country].filter(Boolean).map(esc).join(", ");
+  const bt = String(a.busy_txt || ""), m = bt.match(/^([\d,.]+)\/day$/);
+  const mi = bt.match(/^([\d.]+)M pax$/);
+  const val = m ? `<div class="tp-v">${m[1]}</div><div class="tp-s">departures a day</div>`
+            : mi ? `<div class="tp-v">${mi[1]}M</div><div class="tp-s">domestic passengers a year</div>` : `<div class="tp-v">${esc(bt)}</div>`;
+  const pin = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-2px;margin-right:4px"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+  t.innerHTML = `<span class="tp-c">${esc(a.code)}</span><div class="tp-n">${esc(a.name)}</div>` +
+    `<div class="tp-l">${pin}${loc}</div><div class="tp-f"><div>${val}</div>` +
+    `<span class="tp-b" style="background:${c}26;color:${BUSYDK[a.busy_level]}">${BUSYTXT[a.busy_level]}</span></div>`;
+  const d = el.querySelector(".d").getBoundingClientRect(), cx = d.left + d.width / 2;
+  const left = Math.max(8, Math.min(window.innerWidth - 268, cx - 130));
+  t.style.left = Math.round(left) + "px";
+  t.style.setProperty("--ax", Math.round(cx - left) + "px");
+  let top = d.top - t.offsetHeight - 12, below = top < 96;
+  if (below) top = d.bottom + 12;
+  t.classList.toggle("below", below);
+  t.style.top = Math.round(top) + "px";
+  t.classList.add("on");
+}
+function tipHide() { const t = $("tip"); if (t) t.classList.remove("on"); }
+function tierOf(a) { return (MAJOR[a.region] || []).includes(a.code) ? 3 : a.busy_level >= 3 ? 2 : a.busy_level >= 2 ? 1 : 0; }
+function labels() {
+  const z = map.getZoom();
+  const dotMin = z < 2.6 ? 3 : z < 3.6 ? 2 : z < 4.6 ? 1 : 0;
+  const labMin = z < 3.6 ? 3 : z < 4.6 ? 2 : z < 6 ? 1 : 0;
+  const placed = [];
+  marks.slice().sort((p, q) => tierOf(q.a) - tierOf(p.a) || q.a.sk - p.a.sk).forEach(({el, a}) => {
+    const t = tierOf(a), on = t >= dotMin || a.region + a.code === hl;
+    el.style.display = on ? "" : "none";
+    let lab = on && t >= labMin;
+    if (lab) {
+      const p = map.project([a.lon, a.lat]), w = 10 + 9 * a.code.length;
+      const bx = [p.x - w / 2 - 3, p.y + 4, p.x + w / 2 + 3, p.y + 28];
+      if (placed.some(q => bx[0] < q[2] && bx[2] > q[0] && bx[1] < q[3] && bx[3] > q[1])) lab = false;
+      else placed.push(bx);
+    }
+    el.classList.toggle("nolab", !lab);
+  });
+}
+let forcedReg = null;
+function render() {
+  const b = map.getBounds();
+  lastVis = A.filter(a => b.contains([a.lon, a.lat])).sort((x, y) => y.sk - x.sk);
+  const cnt = {US: 0, EU: 0, IN: 0, AU: 0};
+  lastVis.forEach(a => cnt[a.region]++);
+  const dom = lastVis.length ? Object.keys(cnt).sort((x, y) => cnt[y] - cnt[x])[0] : null;
+  curReg = forcedReg || (dom && cnt[dom] >= 0.6 * lastVis.length ? dom : "ALL");
+  $("reglbl").textContent = curReg ? RNAME[curReg] : "—";
+  rows();
+  loadWx();
+  $("note").textContent = (cnt.IN ? "India: delays are estimates (DGCA national on-time performance × city route congestion). " : "") +
+    "Departure delays = share of flights more than 15 min late. Weather is live, from Open-Meteo.com.";
+}
+function tint() {
+  for (const l of map.getStyle().layers) {
+    const id = l.id;
+    try {
+      if (l.type === "hillshade" || /hillshade|relief|terrain|contour/.test(id)) map.setLayoutProperty(id, "visibility", "none");
+      else if (l.type === "background") map.setPaintProperty(id, "background-color", "#D6EBB5");
+      else if (l.type === "fill" && /water|ocean|sea|lake/.test(id)) map.setPaintProperty(id, "fill-color", "#92D2F7");
+      else if (l.type === "line" && /waterway|river|canal/.test(id)) map.setPaintProperty(id, "line-color", "#92D2F7");
+      else if (l.type === "fill" && /ice|glacier|snow/.test(id)) map.setPaintProperty(id, "fill-color", "#F4F7F9");
+      else if (l.type === "fill" && /sand|beach|desert|bare|rock|scree/.test(id)) map.setPaintProperty(id, "fill-color", "#EDE6C6");
+      else if (l.type === "fill" && /park|wood|forest|grass|landcover|nature|national|meadow|scrub|farmland/.test(id)) {
+        map.setPaintProperty(id, "fill-color", "#C2E2A0");
+        map.setPaintProperty(id, "fill-opacity", 0.7);
+      }
+      else if (l.type === "fill" && /landuse|residential|urban|built|industrial|commercial/.test(id)) map.setPaintProperty(id, "fill-color", "#DCE7CB");
+      else if (l.type === "line" && /boundary|admin/.test(id)) map.setPaintProperty(id, "line-color", "#B49AC7");
+      else if (l.type === "symbol" && /country/.test(id)) {
+        map.setPaintProperty(id, "text-color", "#A2337A");
+        map.setPaintProperty(id, "text-halo-color", "rgba(255,255,255,0.85)");
+        map.setLayoutProperty(id, "text-transform", "uppercase");
+        map.setLayoutProperty(id, "text-letter-spacing", 0.15);
+      }
+      else if (l.type === "symbol" && /state|province/.test(id)) map.setPaintProperty(id, "text-color", "#B07AA5");
+      else if (l.type === "symbol" && /water|ocean|sea|marine/.test(id)) map.setPaintProperty(id, "text-color", "#4E8DB8");
+    } catch (e) {}
+  }
+  document.querySelectorAll(".maplibregl-ctrl-attrib").forEach(el => el.classList.remove("maplibregl-compact-show"));
+}
+function showHits() {
+  $("sres").innerHTML = hits.map((a, i) => `<div class="it ${i === act ? "act" : ""}" data-i="${i}"><b>${esc(a.code)}</b>` +
+    `<span>${esc(a.name)} · ${esc(a.city)}</span><i>${esc(a.country)}</i></div>`).join("") ||
+    '<div class="it"><span>No matching airport</span></div>';
+  $("sres").style.display = "block";
+}
+let going = false;
+function go(a) {
+  if (!a || going) return;
+  going = true;
+  $("sres").style.display = "none";
+  hl = a.region + a.code;
+  $("sheet").scrollTo({top: $("panel").offsetTop - window.innerHeight * 0.62, behavior: "smooth"});
+  map.flyTo({center: [a.lon, a.lat], zoom: 9, duration: 1500, padding: {top: 110, bottom: Math.round(window.innerHeight * 0.38), left: 0, right: 0}, essential: true});
+  map.once("moveend", () => {
+    const pt = map.project([a.lon, a.lat]), r = $("reveal");
+    $("rvcode").textContent = a.code;
+    r.style.transition = "none";
+    r.style.clipPath = `circle(0px at ${pt.x}px ${pt.y}px)`;
+    void r.offsetWidth;
+    r.style.transition = "";
+    r.classList.add("on");
+    r.style.clipPath = `circle(150vmax at ${pt.x}px ${pt.y}px)`;
+    setTimeout(() => send(a.qp), 750);
+  });
+}
+const pick = go;
+function init() {
+  const maxIN = Math.max(1, ...A.filter(a => a.region === "IN").map(a => a.sort));
+  A.forEach(a => { a.sk = a.region === "IN" ? 700 * a.sort / maxIN : a.sort; });
+  map = new maplibregl.Map({container: "map", style: "https://tiles.openfreemap.org/styles/liberty",
+    bounds: REG.US, fitBoundsOptions: {padding: pad()}, minZoom: 1.5, dragRotate: false, pitchWithRotate: false,
+    attributionControl: {compact: true}});
+  map.touchZoomRotate.disableRotation();
+  map.scrollZoom.setWheelZoomRate(1 / 220);
+  map.scrollZoom.disable();
+  map.getCanvasContainer().addEventListener("wheel", e => {
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey) {
+      const r = map.getCanvas().getBoundingClientRect();
+      const dz = Math.max(-1, Math.min(1, -e.deltaY / 100));
+      map.zoomTo(map.getZoom() + dz, {around: map.unproject([e.clientX - r.left, e.clientY - r.top]), duration: 0});
+      forcedReg = null;
+    } else {
+      $("sheet").scrollBy({top: e.deltaY});
+    }
+  }, {passive: false});
+  map.on("load", () => {
+    tint();
+    [...A].sort((x, y) => x.sort - y.sort).forEach(a => {
+      const s = SIZE[a.busy_level];
+      const el = document.createElement("div");
+      el.className = "mk";
+      el.innerHTML = `<span class="d" style="width:${s}px;height:${s}px;background:${BUSY[a.busy_level]}"></span>` +
+                     `<span class="lb">${esc(a.code)}</span>`;
+      el.addEventListener("click", e => { e.stopPropagation(); tipHide(); go(a); });
+      el.addEventListener("mouseenter", () => tipShow(a, el));
+      el.addEventListener("mouseleave", tipHide);
+      new maplibregl.Marker({element: el, anchor: "top", offset: [0, -s / 2]}).setLngLat([a.lon, a.lat]).addTo(map);
+      marks.push({el, a});
+    });
+    labels();
+    render();
+  });
+  map.on("moveend", render);
+  map.on("movestart", tipHide);
+  ["dragstart", "wheel", "touchstart", "dblclick"].forEach(ev => map.on(ev, () => { forcedReg = null; }));
+  map.on("zoom", labels);
+}
+
+$("q").addEventListener("input", () => {
+  const q = norm($("q").value.trim());
+  if (!q) { $("sres").style.display = "none"; return; }
+  hits = A.filter(a => norm(a.code + " " + a.name + " " + a.city + " " + a.country).includes(q))
+          .sort((x, y) => y.sort - x.sort).slice(0, 8);
+  act = 0;
+  showHits();
+});
+$("q").addEventListener("keydown", e => {
+  if (e.key === "ArrowDown") { act = Math.min(act + 1, hits.length - 1); showHits(); e.preventDefault(); }
+  else if (e.key === "ArrowUp") { act = Math.max(act - 1, 0); showHits(); e.preventDefault(); }
+  else if (e.key === "Enter") { pick(hits[act]); }
+  else if (e.key === "Escape") { $("sres").style.display = "none"; }
+});
+$("q").addEventListener("blur", () => setTimeout(() => { $("sres").style.display = "none"; }, 150));
+$("sres").addEventListener("mousedown", e => {
+  const it = e.target.closest(".it");
+  if (it && it.dataset.i) { e.preventDefault(); pick(hits[+it.dataset.i]); }
+});
+$("tb").addEventListener("click", e => {
+  const tr = e.target.closest("tr");
+  const a = tr && A.find(x => x.region + x.code === tr.dataset.k);
+  if (a) go(a);
+});
+$("regbtn").addEventListener("click", e => {
+  e.stopPropagation();
+  document.querySelectorAll(".ro").forEach(o => o.classList.toggle("sel", o.dataset.v === curReg));
+  $("regsel").classList.toggle("open");
+});
+$("regmenu").addEventListener("click", e => {
+  const o = e.target.closest(".ro");
+  if (!o) return;
+  $("regsel").classList.remove("open");
+  $("sheet").scrollTo({top: $("panel").offsetTop - window.innerHeight * 0.62, behavior: "smooth"});
+  forcedReg = o.dataset.v;
+  map.setPadding({top: 0, bottom: 0, left: 0, right: 0});
+  map.fitBounds(REG[o.dataset.v], {padding: {top: 110, bottom: Math.round(window.innerHeight * 0.38), left: 60, right: 60}, duration: 1400});
+});
+document.addEventListener("click", () => $("regsel").classList.remove("open"));
+$("more").addEventListener("click", () => { showAll = !showAll; rows(); loadWx(); });
+$("cta").addEventListener("click", () => {
+  $("sheet").scrollTo({top: 0, behavior: "smooth"});
+  setTimeout(() => $("orig").focus(), 500);
+});
+$("sheet").addEventListener("scroll", () => {
+  const t = $("panel").getBoundingClientRect().top;
+  document.body.classList.toggle("docked", t <= 92);
+  document.body.classList.toggle("covered", t < heroB() + 8);
+});
+window.addEventListener("resize", () => { if (map) map.resize(); });
+window.addEventListener("message", e => {
+  const d = e.data;
+  if (!d || d.type !== "streamlit:render") return;
+  if (!started) {
+    started = true;
+    const args = d.args || {}, srch = args.search || {};
+    A = args.airports || [];
+    FROM = srch.from || []; TO = srch.to || []; REACH = srch.reach || {};
+    init();
+  }
+});
+ST("streamlit:componentReady", {apiVersion: 1});
+ST("streamlit:setFrameHeight", {height: 800});
+</script>
+</body></html>

@@ -1,0 +1,147 @@
+import html
+
+import pandas as pd
+import streamlit as st
+
+from core import data as dl
+
+HOME_CSS = """
+<style>
+.hero{padding:36px 0 8px 0;}
+.hero-title{font-size:2.5rem;font-weight:700;color:#111418;letter-spacing:-.02em;}
+.hero-sub{color:#111418;font-size:1.05rem;margin-top:6px;}
+.ap-card{background:#FFFFFF;border-radius:20px;box-shadow:0 12px 32px rgba(11,31,51,.08);
+         padding:8px 28px 16px 28px;margin-top:16px;}
+.ap-table{width:100%;border-collapse:collapse;}
+.ap-table td:not(:first-child),.ap-table th:not(:first-child){white-space:nowrap;}
+.ap-table th,.ap-table td{border-left:none !important;border-right:none !important;border-top:none !important;}
+.ap-table th{text-align:left;font-size:.6875rem;letter-spacing:.08em;color:#111418;font-weight:600;
+             padding:18px 12px 12px 12px;border-bottom:1px solid #E2E6EC;text-transform:uppercase;}
+.ap-table td{padding:16px 12px;border-bottom:1px solid #E2E6EC;color:#111418;font-size:.95rem;vertical-align:middle;}
+.ap-table tr:last-child td{border-bottom:none;}
+.ap-link{display:flex;gap:16px;align-items:center;text-decoration:none !important;color:#111418 !important;}
+.ap-code{font-size:1.25rem;font-weight:700;letter-spacing:-.02em;min-width:72px;}
+.ap-name{display:block;font-weight:600;}
+.ap-city{display:block;color:#111418;font-size:.85rem;}
+.sub{display:block;color:#111418;font-size:.8rem;margin-top:2px;}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;}
+.legend{color:#111418;font-size:.8rem;margin-top:12px;}
+</style>
+"""
+
+EU_NOTE = ("Europe: six sample months from EUROCONTROL (Mar, Jun, Sep, Dec 2023; Mar, Jun 2024). "
+           "Hours are UTC. Arrival delay is measured against the filed arrival time, which differs by airport "
+           "(taxi-in, schedule padding), so compare airports on departures rather than arrivals.")
+
+IN_NOTE = ("India: DGCA publishes delay data per airline and month, not per airport. "
+           "Cities shows passenger traffic and route congestion; Airlines shows on-time performance and CO₂. "
+           "Expected delay is a proxy estimated from the on-time percentage (OTP), not a measured delay.")
+
+
+def fmt(v, spec=",.0f", suffix=""):
+    if v is None or pd.isna(v):
+        return "–"
+    return format(v, spec) + suffix
+
+
+def risk(ontime):
+    if ontime is None or pd.isna(ontime):
+        return "#DCE4E8", "No data"
+    if ontime >= 0.82:
+        return "#2C9A69", "Low risk"
+    if ontime >= 0.75:
+        return "#D99019", "Moderate"
+    return "#D45252", "High risk"
+
+
+def render_home():
+    st.markdown(HOME_CSS, unsafe_allow_html=True)
+
+    airline = st.query_params.get("airline")
+    if airline:
+        from views.india import render_airline
+        render_airline(airline)
+        return
+
+    city = st.query_params.get("city")
+    if city:
+        from views.india import render_city
+        render_city(city)
+        return
+
+    st.markdown('<div class="hero"><div class="hero-title">Airports</div>'
+                '<div class="hero-sub">How late flights run, and what that costs in CO₂ — airport by airport.</div></div>',
+                unsafe_allow_html=True)
+
+    regions = ["United States", "Europe", "India"]
+    r_idx = 2 if st.query_params.get("region") == "India" else 0
+    c1, c2, c3 = st.columns([1.4, 1.4, 3], vertical_alignment="center")
+    with c1:
+        region = st.selectbox("Region", regions, index=r_idx, label_visibility="collapsed")
+
+    default_idx = 0
+    if region == "India":
+        from views.india import india_months
+        months, default_idx = india_months()
+    else:
+        months = dl.all_months(region)
+    if not months:
+        st.warning("No data found for this region.")
+        return
+    with c2:
+        ym = st.selectbox("Month", months, index=default_idx,
+                          format_func=lambda t: dl.month_label(t[0], t[1]),
+                          label_visibility="collapsed", key="month_" + region)
+    with c3:
+        if region == "India":
+            ph = "Search cities or airlines…"
+        else:
+            ph = "Search airports by code, name or city…"
+        q = st.text_input("Search", placeholder=ph, label_visibility="collapsed", key="q_" + region)
+
+    if region == "India":
+        st.caption(IN_NOTE)
+        from views.india import render_india
+        render_india(ym[0], ym[1], q)
+        return
+
+    if region == "Europe":
+        st.caption(EU_NOTE)
+
+    t = dl.airport_table(ym[0], ym[1], region=region)
+    rows = []
+    for _, r in t.iterrows():
+        code = str(r["airport"])
+        info = dl.airport_info(code)
+        hay = (code + " " + info["name"] + " " + info["city"]).lower()
+        if q and q.strip().lower() not in hay:
+            continue
+        color, label = risk(r["pct_dep_ontime"])
+        rows.append(
+            '<tr>'
+            '<td><a class="ap-link" href="?airport=' + code + '" target="_self">'
+            '<span class="ap-code">' + code + '</span>'
+            '<span><span class="ap-name">' + html.escape(info["name"]) + '</span>'
+            '<span class="ap-city">' + html.escape(info["city"]) + '</span></span></a></td>'
+            '<td><b>' + fmt(r["avg_dep_when_late"], ".0f", " min") + '</b>'
+            '<span class="sub">' + fmt(r["pct_dep_ontime"] * 100, ".1f", "% on time") + '</span></td>'
+            '<td><b>' + fmt(r["avg_arr_when_late"], ".0f", " min") + '</b>'
+            '<span class="sub">' + fmt(r["pct_arr_ontime"] * 100, ".1f", "% on time") + '</span></td>'
+            '<td><b>' + fmt(r["co2_tonnes"], ",.0f", " t") + '</b></td>'
+            '<td><span class="dot" style="background:' + color + '"></span>' + label + '</td>'
+            '</tr>')
+
+    if not rows:
+        st.warning("No airports match your search.")
+        return
+
+    shown = rows[:60]
+    st.markdown(
+        '<div class="ap-card"><table class="ap-table"><thead><tr>'
+        '<th>Airport</th><th>Avg departure delay</th><th>Avg arrival delay</th>'
+        '<th>Est. CO₂</th><th>Delay risk</th></tr></thead><tbody>'
+        + ''.join(shown) + '</tbody></table></div>'
+        '<div class="legend">Showing ' + str(len(shown)) + ' of ' + str(len(rows)) + ' airports, busiest first. '
+        'Delay = average of late flights only. Risk dot = share of on-time departures '
+        '(≥82% low, 75–82% moderate, &lt;75% high).</div>',
+        unsafe_allow_html=True)

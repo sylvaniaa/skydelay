@@ -1,0 +1,73 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14284B;--mint:#5DCAA5;--mint2:#9FE1CB}
+*{box-sizing:border-box;margin:0}
+html,body{background:transparent;font-family:'Plus Jakarta Sans',sans-serif}
+.cc{background:var(--navy);border-radius:28px;padding:36px 40px;color:#fff;font-variant-numeric:tabular-nums}
+.top{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:24px;align-items:center}
+.lab{font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--mint2);display:flex;gap:8px;align-items:center}
+.big{font-size:clamp(48px,7vw,84px);font-weight:600;line-height:1;color:var(--mint);margin-top:14px;letter-spacing:-.02em}
+.big .s{font-size:.4em}
+.l{font-size:18px;font-weight:500;margin-top:10px}
+.live{display:inline-flex;align-items:center;gap:12px;margin-top:22px;background:rgba(93,202,165,.14);border-radius:14px;padding:12px 18px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--mint);animation:p 1.4s infinite}
+.lv{font-size:28px;font-weight:600}
+.ls{font-size:15px;font-weight:400}
+.globe{position:relative;width:200px;height:200px}
+.orb{position:absolute;inset:0;animation:o 4s linear infinite}
+.car{position:absolute;left:86px;top:0;width:28px;height:28px}
+.tiles{display:grid;gap:14px;margin-top:28px}
+.t{background:rgba(255,255,255,.07);border-radius:18px;padding:18px 20px}
+.tn{font-size:30px;font-weight:600}
+.tl{font-size:15px;font-weight:400;margin-top:2px}
+@keyframes o{to{transform:rotate(360deg)}}
+@keyframes p{50%{opacity:.35}}
+@media (max-width:640px){.cc{padding:24px 20px;border-radius:22px}.top{grid-template-columns:1fr}.globe{display:none}.tiles{grid-template-columns:1fr!important}}
+@media (prefers-reduced-motion:reduce){.orb,.dot{animation:none}}
+</style></head><body>
+<div class="cc" id="cc" style="visibility:hidden">
+ <div class="top">
+  <div>
+   <div class="lab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></svg>CLIMATE COST OF DELAYS</div>
+   <div class="big"><span id="tot">0</span> t CO<span class="s">2</span></div>
+   <div class="l" id="sub"></div>
+   <div class="live"><span class="dot"></span><span class="lv" id="live">0</span><span class="ls">kg since midnight</span></div>
+  </div>
+  <div class="globe" aria-hidden="true">
+   <svg viewBox="0 0 200 200" width="200" height="200">
+    <circle cx="100" cy="100" r="86" fill="none" stroke="#9FE1CB" stroke-width="1.2" stroke-dasharray="3 6" opacity=".6"/>
+    <circle cx="100" cy="100" r="62" fill="#1E5FA8"/>
+    <path d="M66 80q14-20 36-11q8 14-6 22q-16 3-14 19q-14-6-16-30z M112 118q16-8 25 8q-6 16-22 13q-8-11-3-21z M120 66q10-4 16 4q-4 8-12 6z" fill="#5DCAA5" opacity=".9"/>
+   </svg>
+   <div class="orb"><svg class="car" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17h-2v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6-6h15m-6 0v-5"/></svg></div>
+  </div>
+ </div>
+ <div class="tiles" id="tiles"></div>
+</div>
+<script>
+const send=(type,d)=>window.parent.postMessage(Object.assign({isStreamlitMessage:true,type},d||{}),"*");
+const fmt=(v,dec)=>v.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+let P=null,sig=null,started=false,timer=null;
+function up(el,to,dec,ms){const t0=performance.now();(function s(t){const k=Math.min(1,(t-t0)/ms),e=1-Math.pow(1-k,3);el.textContent=fmt(to*e,dec);if(k<1)requestAnimationFrame(s);})(t0);}
+function secsLocal(tz){try{const p=new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const g=k=>+p.find(x=>x.type===k).value;return g('hour')*3600+g('minute')*60+g('second');}catch(e){const n=new Date();return n.getHours()*3600+n.getMinutes()*60+n.getSeconds();}}
+function tick(){const perSec=P.day_t*1000/86400;document.getElementById('live').textContent=fmt(secsLocal(P.tz)*perSec,perSec<1?1:0);}
+function start(){if(started)return;started=true;
+ up(document.getElementById('tot'),P.total_t,0,1600);
+ document.querySelectorAll('[data-to]').forEach(el=>up(el,+el.dataset.to,+el.dataset.dec,1600));
+ clearInterval(timer);setTimeout(()=>{tick();timer=setInterval(tick,1000);},1600);}
+function height(){send('streamlit:setFrameHeight',{height:document.documentElement.scrollHeight});}
+const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){start();io.disconnect();}},{threshold:.35});
+function render(d){
+ const s=JSON.stringify(d);if(s===sig)return;sig=s;P=d;started=false;
+ document.getElementById('sub').textContent=d.sub;
+ const tiles=[];
+ tiles.push(d.laps_num!=null?`<div class="t"><div class="tn"><span data-to="${d.laps_num}" data-dec="0">0</span>${d.laps_suffix}</div><div class="tl">${d.laps_label}</div></div>`:'');
+ tiles.push(`<div class="t"><div class="tn"><span data-to="${d.day_t}" data-dec="1">0</span> t</div><div class="tl">every day</div></div>`);
+ if(d.per_dep_kg!=null)tiles.push(`<div class="t"><div class="tn"><span data-to="${d.per_dep_kg}" data-dec="0">0</span> kg</div><div class="tl">per departure</div></div>`);
+ const T=document.getElementById('tiles');const html=tiles.filter(Boolean);T.innerHTML=html.join('');T.style.gridTemplateColumns=`repeat(${html.length},minmax(0,1fr))`;
+ document.getElementById('cc').style.visibility='visible';height();io.observe(document.getElementById('cc'));}
+window.addEventListener('message',e=>{const m=e.data;if(m&&m.type==='streamlit:render')render(m.args.data);});
+new ResizeObserver(height).observe(document.body);
+send('streamlit:componentReady',{apiVersion:1});
+</script></body></html>

@@ -1,0 +1,123 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;font-family:Plus Jakarta Sans,-apple-system,sans-serif;}
+body{margin:0;background:transparent;}
+#root{padding:2px;}
+.lbl{font-size:14px;color:#111418;margin:0 0 6px 2px;}
+.field{background:#FFFFFF;border:1px solid #DDE3EA;border-radius:12px;padding:8px 14px;cursor:pointer;
+  display:flex;align-items:center;gap:10px;height:60px;}
+.field:hover,.open .field{border-color:#0055A0;}
+.txt{flex:1;min-width:0;}
+.t1{font-weight:600;color:#111418;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2{color:#111418;font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ph{color:#111418;font-size:15px;}
+.chip{background:#E9F1F7;color:#111418;border-radius:6px;padding:4px 8px;font-size:13px;font-weight:500;flex:none;}
+.panel{display:none;background:#FFFFFF;border:1px solid #DDE3EA;border-radius:14px;margin-top:6px;
+  box-shadow:0 8px 24px rgba(11,31,51,.08);}
+.open .panel{display:block;}
+.search{display:flex;align-items:center;gap:8px;background:#EEF5FA;border-radius:999px;margin:12px;padding:9px 14px;}
+.search svg{width:18px;height:18px;color:#111418;flex:none;}
+.search input{border:none;background:transparent;outline:none;font-size:15px;flex:1;color:#111418;}
+.list{max-height:300px;overflow-y:auto;padding:0 6px 8px 6px;}
+.item{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;cursor:pointer;}
+.item:hover,.item.active{background:#EEF5FA;}
+.item.sub{padding-left:40px;}
+.ic{width:24px;height:24px;flex:none;color:#111418;}
+mark{background:none;color:#0055A0;}
+.empty{color:#111418;padding:14px;font-size:14px;}
+</style></head>
+<body>
+<div id="root">
+  <div class="lbl" id="lbl"></div>
+  <div class="field" id="field"><div class="txt" id="ftxt"></div><span class="chip" id="fchip"></span></div>
+  <div class="panel">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" placeholder="Search city, country or airport" autocomplete="off">
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+</div>
+<script>
+const ST = (type, extra) => window.parent.postMessage(Object.assign({isStreamlitMessage: true, type: type}, extra || {}), "*");
+const CITY = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21h18M5 21V9l6-3v15M11 21V4l8 4v13M14 10h2M14 14h2M14 18h2M7.5 12h1M7.5 16h1"/></svg>';
+const PLANE = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 16.5l20-6.5-2-2-7 2L8 4H6l2.5 7.2L5 12.5 3 11H2l1 3.2z"/><path d="M3 21h18"/></svg>';
+let lastArgs, opts = [], selected = null, label = "", placeholder = "Choose a city or airport", isOpen = false, active = -1, shown = [];
+const root = document.getElementById("root"), q = document.getElementById("q"), list = document.getElementById("list");
+
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c])); }
+function norm(s) { return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+function hl(text, qq) {
+  if (!qq) return esc(text);
+  const i = norm(text).indexOf(qq);
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + qq.length)) + "</mark>" + esc(text.slice(i + qq.length));
+}
+function height() { requestAnimationFrame(() => ST("streamlit:setFrameHeight", {height: root.offsetHeight + 6})); }
+
+function renderField() {
+  document.getElementById("lbl").textContent = label;
+  const o = opts.find(x => x.value === selected);
+  document.getElementById("ftxt").innerHTML = o
+    ? '<div class="t1">' + esc(o.t1) + '</div><div class="t2">' + esc(o.t2) + '</div>'
+    : '<div class="ph">' + esc(placeholder) + '</div>';
+  const chip = document.getElementById("fchip");
+  chip.textContent = o ? o.chip : "";
+  chip.style.display = o ? "" : "none";
+}
+
+function renderList() {
+  const qq = norm(q.value.trim());
+  shown = qq ? opts.filter(o => o.search.indexOf(qq) >= 0) : opts;
+  const cities = new Set(shown.filter(o => o.kind === "city").map(o => o.value));
+  const html = shown.slice(0, 250).map((o, i) =>
+    '<div class="item' + (o.sub && cities.has(o.parent) ? " sub" : "") + (i === active ? " active" : "") + '" data-i="' + i + '">' +
+    (o.kind === "city" ? CITY : PLANE) +
+    '<div class="txt"><div class="t1">' + hl(o.t1, qq) + '</div><div class="t2">' + hl(o.t2, qq) + '</div></div>' +
+    '<span class="chip">' + esc(o.chip) + '</span></div>').join("");
+  list.innerHTML = html || '<div class="empty">No matching city or airport</div>';
+  const a = list.querySelector(".item.active");
+  if (a) a.scrollIntoView({block: "nearest"});
+}
+
+function openPanel() { isOpen = true; root.classList.add("open"); q.value = ""; active = -1; renderList(); list.scrollTop = 0; q.focus(); height(); }
+function closePanel() { if (!isOpen) return; isOpen = false; root.classList.remove("open"); height(); }
+function choose(o) {
+  if (!o) return;
+  selected = o.value; closePanel(); renderField();
+  ST("streamlit:setComponentValue", {value: o.value, dataType: "json"});
+}
+
+document.getElementById("field").addEventListener("click", () => isOpen ? closePanel() : openPanel());
+q.addEventListener("input", () => { active = q.value.trim() ? 0 : -1; renderList(); });
+q.addEventListener("keydown", e => {
+  if (e.key === "ArrowDown") { active = Math.min(active + 1, shown.length - 1); renderList(); e.preventDefault(); }
+  else if (e.key === "ArrowUp") { active = Math.max(active - 1, 0); renderList(); e.preventDefault(); }
+  else if (e.key === "Enter") { choose(shown[active >= 0 ? active : 0]); }
+  else if (e.key === "Escape") { closePanel(); }
+});
+list.addEventListener("mousedown", e => {
+  const it = e.target.closest(".item");
+  if (!it) return;
+  e.preventDefault();
+  choose(shown[+it.dataset.i]);
+});
+window.addEventListener("blur", closePanel);
+window.addEventListener("message", e => {
+  const d = e.data;
+  if (!d || d.type !== "streamlit:render") return;
+  const a = d.args || {};
+  opts = a.options || [];
+  label = a.label || "";
+  placeholder = a.placeholder || placeholder;
+  if (a.selected !== lastArgs) { lastArgs = a.selected; if (!isOpen) selected = a.selected; }
+  renderField();
+  if (isOpen) renderList();
+  height();
+});
+ST("streamlit:componentReady", {apiVersion: 1});
+height();
+</script>
+</body></html>

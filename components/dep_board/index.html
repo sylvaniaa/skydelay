@@ -1,0 +1,123 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:transparent;}
+.bd{background:#0B1A33;border-radius:16px;padding:16px 16px 12px;font-family:'Share Tech Mono',ui-monospace,monospace;color:#EAF2FF;}
+.top{display:flex;align-items:center;gap:16px;padding:2px 14px 14px 6px;flex-wrap:wrap;}
+.ttl{display:flex;align-items:center;gap:12px;font-size:30px;letter-spacing:.08em;color:#FFFFFF;white-space:nowrap;}
+.ttl svg{width:30px;height:30px;flex:none;}
+.ttl small{font-size:16px;color:#9DB4CC;letter-spacing:.1em;}
+.q{flex:0 1 260px;min-width:170px;margin-left:auto;display:flex;align-items:center;gap:8px;background:#132644;border:1px solid #2B4670;
+  border-radius:999px;padding:6px 12px;}
+.q svg{width:15px;height:15px;flex:none;}
+.q input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#EAF2FF;font-family:inherit;font-size:13px;letter-spacing:.08em;text-transform:uppercase;}
+.q input::placeholder{color:#6F86A6;}
+.q:focus-within{border-color:#7CC4FF;}
+.clk{font-size:18px;color:#7CC4FF;letter-spacing:.06em;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.hdr,.r{display:grid;grid-template-columns:220px 96px minmax(0,1fr) 290px;gap:4px;}
+.hdr{padding-right:10px;}
+.hdr div{font-size:12px;color:#9DB4CC;letter-spacing:.14em;padding:4px 10px 6px;}
+.rows{max-height:484px;overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:#2B4670 transparent;}
+.rows::-webkit-scrollbar{width:8px;} .rows::-webkit-scrollbar-thumb{background:#2B4670;border-radius:8px;}
+.r{margin-top:4px;cursor:pointer;}
+.c{background:#132644;padding:9px 10px;font-size:19px;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;display:flex;align-items:center;gap:10px;min-height:44px;}
+.r:hover .c{background:#1A3157;}
+.lg{width:46px;height:26px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden;}
+.lg img{max-width:42px;max-height:22px;object-fit:contain;}
+.lg .al{color:#0B1A33;font-size:11px;letter-spacing:0;}
+.tm{color:#7CC4FF;}
+.tm sup{font-size:11px;margin-left:2px;color:#9DB4CC;}
+.dst small{color:#9DB4CC;font-size:15px;margin-left:4px;}
+.st.s-g{color:#7FE0B0;} .st.s-a{color:#FFD27A;} .st.s-r{color:#FF9C96;} .st.s-d{color:#9DB4CC;}
+.r.past .c:not(.st){color:#6F86A6;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:#9DB4CC;}
+.r.past .lg{opacity:.7;}
+.empty{margin-top:4px;background:#132644;padding:14px 12px;font-size:16px;letter-spacing:.08em;color:#9DB4CC;}
+.flip{animation:flip .55s ease;}
+@keyframes flip{0%{transform:perspective(300px) rotateX(0)}50%{transform:perspective(300px) rotateX(90deg)}100%{transform:perspective(300px) rotateX(0)}}
+.ft{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:0 6px;font-size:13px;letter-spacing:.12em;color:#9DB4CC;gap:10px;flex-wrap:wrap;}
+.lv{display:inline-flex;align-items:center;gap:8px;color:#7FE0B0;}
+.lv i{width:8px;height:8px;border-radius:50%;background:#2C9A69;animation:pulse 1.6s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media (max-width:1000px){.c{font-size:16px;min-height:40px;}.hdr,.r{grid-template-columns:170px 76px minmax(0,1fr) 230px;}
+  .ttl{font-size:24px;}.ttl svg{width:24px;height:24px;}.ttl small{font-size:14px;}.clk{font-size:15px;}.rows{max-height:444px;}}
+@media (max-width:760px){.q{flex:1 1 180px;margin-left:0;}
+  .hdr,.r{grid-template-columns:132px 62px minmax(0,1fr) 150px;}.c{font-size:14px;letter-spacing:.04em;padding:8px;}
+  .c.st{white-space:normal;line-height:1.2;}.lg{width:36px;height:22px;}.lg img{max-width:32px;max-height:18px;}}
+@media (max-width:600px){.lg,.dst small{display:none;}.hdr,.r{grid-template-columns:84px 54px minmax(0,1fr) 112px;}
+  .ttl small{display:none;}.hdr div{font-size:10px;padding:4px 6px;}}
+@media (prefers-reduced-motion:reduce){.flip,.lv i{animation:none !important;}}
+</style></head>
+<body><div id="root"></div>
+<script>
+const DEPARTED = "DEPARTED";
+const send = (type, e) => window.parent.postMessage(Object.assign({isStreamlitMessage: true, type}, e || {}), "*");
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s || "").toLowerCase().replace(/[\s\-·]/g, "");
+let F = [], L = {}, W = [0, 24], off = 0, timer = null, last = null, fmt = null, Q = "";
+const now = () => Date.now() + off;
+function fit() { send("streamlit:setFrameHeight", {height: Math.ceil(document.getElementById("root").getBoundingClientRect().height) + 4}); }
+const PLANE = '<svg viewBox="0 0 24 24" fill="#FFFFFF"><path d="M2 16.5l20-6.5-2-2-7 2L8 4H6l2.5 7.2L5 12.5 3 11H2l1 3.2z"/></svg>';
+const LENS = '<svg viewBox="0 0 24 24" fill="none" stroke="#7CC4FF" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+function status(f) { return f.t <= now() ? [DEPARTED, "d"] : [f.risk, f.lvl]; }
+function rowsHtml() {
+  const q = norm(Q);
+  const pick = q ? F.map((f, i) => [f, i]).filter(([f]) => f.key.includes(q))
+                 : F.map((f, i) => [f, i]).filter(([f]) => f.h >= W[0] && f.h < W[1]);
+  if (!pick.length) return `<div class="empty">${q ? "NO FLIGHTS FOUND" : "NO SCHEDULED DEPARTURES"}</div>`;
+  return pick.map(([f, i]) => {
+    const [txt, cls] = status(f);
+    return `<div class="r${f.t <= now() ? " past" : ""}" data-i="${i}">`
+      + `<div class="c"><span class="lg">${L[f.al] || ""}</span>${esc(f.fl)}</div>`
+      + `<div class="c tm">${esc(f.time)}${f.plus1 ? "<sup>+1</sup>" : ""}</div>`
+      + `<div class="c dst">${esc(f.city)}<small>${esc(f.dest)}</small></div>`
+      + `<div class="c st s-${cls}">${esc(txt)}</div></div>`;
+  }).join("");
+}
+function drawRows(scroll) {
+  const box = document.getElementById("rows");
+  box.innerHTML = rowsHtml();
+  box.querySelectorAll(".r").forEach(r => r.onclick = () =>
+    send("streamlit:setComponentValue", {dataType: "json", value: {qp: F[+r.dataset.i].qp, t: Date.now()}}));
+  if (scroll) { const next = box.querySelector(".r:not(.past)"); box.scrollTop = next ? Math.max(0, next.offsetTop - box.offsetTop - 4) : 0; }
+  fit();
+}
+function build(d) {
+  F = (d.flights || []).map(f => Object.assign({key: norm([f.fl, f.al, f.city, f.dest].join(" "))}, f));
+  L = d.logos || {}; W = d.win || [0, 24]; off = (d.now_ms || Date.now()) - Date.now();
+  fmt = new Intl.DateTimeFormat("en-GB", {timeZone: d.tz || "UTC", weekday: "short", day: "2-digit", month: "short",
+                                          hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false});
+  document.getElementById("root").innerHTML =
+    `<div class="bd"><div class="top"><div class="ttl">${PLANE}DEPARTURES<small>${esc(d.title)}</small></div>`
+    + `<label class="q">${LENS}<input id="q" type="search" placeholder="SEARCH FLIGHT OR CITY" autocomplete="off" value="${esc(Q)}"></label>`
+    + `<div class="clk" id="clk"></div></div>`
+    + `<div class="hdr"><div>FLIGHT</div><div>TIME</div><div>DESTINATION</div><div>SKYDELAY FORECAST</div></div>`
+    + `<div class="rows" id="rows"></div>`
+    + `<div class="ft"><span class="lv"><i></i>LIVE SCHEDULE · NEXT 24 HOURS</span><span>${esc(d.date_label || "")}</span></div></div>`;
+  document.getElementById("q").addEventListener("input", e => { Q = e.target.value; drawRows(!Q); });
+  drawRows(true); tick();
+  if (!timer) timer = setInterval(tick, 1000);
+  if (document.fonts) document.fonts.ready.then(fit);
+}
+function tick() {
+  const c = document.getElementById("clk");
+  if (c && fmt) c.textContent = fmt.format(new Date(now())).replace(/,/g, "").toUpperCase();
+  document.querySelectorAll("#rows > .r").forEach(r => {
+    const f = F[+r.dataset.i], [txt, cls] = status(f), st = r.querySelector(".st");
+    if (st && st.textContent !== txt) {
+      st.classList.remove("flip"); void st.offsetWidth; st.classList.add("flip");
+      setTimeout(() => { st.textContent = txt; st.className = "c st s-" + cls + " flip"; }, 270);
+      r.classList.toggle("past", f.t <= now());
+    }
+  });
+}
+window.addEventListener("message", e => {
+  const m = e.data; if (!m || m.type !== "streamlit:render") return;
+  const sig = JSON.stringify(m.args.data); if (sig === last) return; last = sig;
+  try { build(m.args.data); } catch (err) { document.getElementById("root").innerHTML = ""; fit(); }
+});
+new ResizeObserver(fit).observe(document.getElementById("root"));
+send("streamlit:componentReady", {apiVersion: 1});
+</script></body></html>

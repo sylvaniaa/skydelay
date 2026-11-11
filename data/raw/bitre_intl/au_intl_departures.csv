@@ -1,0 +1,169 @@
+month,airport,iata,intl_departures
+2025-08,Adelaide,ADL,268
+2025-08,Brisbane,BNE,1502
+2025-08,Broome,BME,0
+2025-08,Cairns,CNS,211
+2025-08,Canberra,CBR,14
+2025-08,Darwin,DRW,128
+2025-08,Gold Coast,OOL,195
+2025-08,Melbourne,MEL,2318
+2025-08,Norfolk Island,NLK,0
+2025-08,Perth,PER,1187
+2025-08,Sunshine Coast,MCY,27
+2025-08,Sydney,SYD,3448
+2025-08,Toowoomba Wellcamp,WTB,0
+2025-09,Adelaide,ADL,249
+2025-09,Brisbane,BNE,1477
+2025-09,Broome,BME,0
+2025-09,Cairns,CNS,201
+2025-09,Canberra,CBR,13
+2025-09,Darwin,DRW,125
+2025-09,Gold Coast,OOL,233
+2025-09,Melbourne,MEL,2307
+2025-09,Norfolk Island,NLK,0
+2025-09,Perth,PER,1188
+2025-09,Sunshine Coast,MCY,25
+2025-09,Sydney,SYD,3338
+2025-09,Toowoomba Wellcamp,WTB,0
+2025-10,Adelaide,ADL,261
+2025-10,Brisbane,BNE,1513
+2025-10,Broome,BME,0
+2025-10,Cairns,CNS,162
+2025-10,Canberra,CBR,11
+2025-10,Darwin,DRW,128
+2025-10,Gold Coast,OOL,218
+2025-10,Hobart,HBA,3
+2025-10,Melbourne,MEL,2381
+2025-10,Newcastle,NTL,5
+2025-10,Norfolk Island,NLK,0
+2025-10,Perth,PER,1187
+2025-10,Sunshine Coast,MCY,24
+2025-10,Sydney,SYD,3500
+2025-10,Toowoomba Wellcamp,WTB,0
+2025-11,Adelaide,ADL,295
+2025-11,Brisbane,BNE,1524
+2025-11,Cairns,CNS,172
+2025-11,Canberra,CBR,10
+2025-11,Darwin,DRW,121
+2025-11,Gold Coast,OOL,166
+2025-11,Hobart,HBA,12
+2025-11,Melbourne,MEL,2396
+2025-11,Newcastle,NTL,12
+2025-11,Norfolk Island,NLK,0
+2025-11,Perth,PER,1085
+2025-11,Sunshine Coast,MCY,13
+2025-11,Sydney,SYD,3421
+2025-11,Toowoomba Wellcamp,WTB,0
+2025-12,Adelaide,ADL,285
+2025-12,Brisbane,BNE,1752
+2025-12,Cairns,CNS,205
+2025-12,Canberra,CBR,11
+2025-12,Darwin,DRW,139
+2025-12,Gold Coast,OOL,224
+2025-12,Hobart,HBA,13
+2025-12,Melbourne,MEL,2818
+2025-12,Newcastle,NTL,13
+2025-12,Norfolk Island,NLK,0
+2025-12,Perth,PER,1275
+2025-12,Sunshine Coast,MCY,13
+2025-12,Sydney,SYD,3871
+2025-12,Toowoomba Wellcamp,WTB,0
+2026-01,Adelaide,ADL,314
+2026-01,Brisbane,BNE,1775
+2026-01,Cairns,CNS,194
+2026-01,Canberra,CBR,44
+2026-01,Darwin,DRW,143
+2026-01,Gold Coast,OOL,241
+2026-01,Hobart,HBA,13
+2026-01,Melbourne,MEL,2923
+2026-01,Newcastle,NTL,14
+2026-01,Norfolk Island,NLK,0
+2026-01,Perth,PER,1333
+2026-01,Sunshine Coast,MCY,13
+2026-01,Sydney,SYD,4022
+2026-01,Toowoomba Wellcamp,WTB,0
+2026-02,Adelaide,ADL,280
+2026-02,Brisbane,BNE,1485
+2026-02,Cairns,CNS,173
+2026-02,Canberra,CBR,36
+2026-02,Darwin,DRW,119
+2026-02,Gold Coast,OOL,142
+2026-02,Hobart,HBA,12
+2026-02,Melbourne,MEL,2402
+2026-02,Newcastle,NTL,12
+2026-02,Norfolk Island,NLK,0
+2026-02,Perth,PER,1113
+2026-02,Sunshine Coast,MCY,12
+2026-02,Sydney,SYD,3377
+2026-02,Toowoomba Wellcamp,WTB,0
+2026-03,Adelaide,ADL,254
+2026-03,Avalon,AVV,6
+2026-03,Brisbane,BNE,1472
+2026-03,Cairns,CNS,178
+2026-03,Canberra,CBR,11
+2026-03,Darwin,DRW,128
+2026-03,Gold Coast,OOL,173
+2026-03,Hobart,HBA,12
+2026-03,Melbourne,MEL,2387
+2026-03,Newcastle,NTL,13
+2026-03,Norfolk Island,NLK,0
+2026-03,Perth,PER,1158
+2026-03,Sunshine Coast,MCY,17
+2026-03,Sydney,SYD,3441
+2026-03,Toowoomba Wellcamp,WTB,0
+2026-04,Adelaide,ADL,250
+2026-04,Avalon,AVV,22
+2026-04,Brisbane,BNE,1445
+2026-04,Broome,BME,0
+2026-04,Cairns,CNS,179
+2026-04,Canberra,CBR,11
+2026-04,Darwin,DRW,121
+2026-04,Gold Coast,OOL,224
+2026-04,Melbourne,MEL,2334
+2026-04,Newcastle,NTL,17
+2026-04,Norfolk Island,NLK,0
+2026-04,Perth,PER,1190
+2026-04,Sunshine Coast,MCY,25
+2026-04,Sydney,SYD,3349
+2026-04,Toowoomba Wellcamp,WTB,0
+2026-05,Adelaide,ADL,211
+2026-05,Avalon,AVV,22
+2026-05,Brisbane,BNE,1406
+2026-05,Broome,BME,0
+2026-05,Cairns,CNS,181
+2026-05,Canberra,CBR,9
+2026-05,Darwin,DRW,95
+2026-05,Gold Coast,OOL,181
+2026-05,Melbourne,MEL,2174
+2026-05,Newcastle,NTL,18
+2026-05,Perth,PER,1070
+2026-05,Sunshine Coast,MCY,27
+2026-05,Sydney,SYD,3254
+2026-05,Toowoomba Wellcamp,WTB,0
+2026-06,Adelaide,ADL,234
+2026-06,Avalon,AVV,22
+2026-06,Brisbane,BNE,1456
+2026-06,Broome,BME,0
+2026-06,Cairns,CNS,186
+2026-06,Canberra,CBR,14
+2026-06,Darwin,DRW,97
+2026-06,Gold Coast,OOL,189
+2026-06,Melbourne,MEL,2128
+2026-06,Newcastle,NTL,17
+2026-06,Perth,PER,1115
+2026-06,Sunshine Coast,MCY,34
+2026-06,Sydney,SYD,3201
+2026-06,Toowoomba Wellcamp,WTB,0
+2026-07,Adelaide,ADL,296
+2026-07,Avalon,AVV,23
+2026-07,Brisbane,BNE,1627
+2026-07,Broome,BME,0
+2026-07,Cairns,CNS,209
+2026-07,Canberra,CBR,22
+2026-07,Darwin,DRW,109
+2026-07,Gold Coast,OOL,251
+2026-07,Melbourne,MEL,2363
+2026-07,Newcastle,NTL,18
+2026-07,Perth,PER,1277
+2026-07,Sunshine Coast,MCY,39
+2026-07,Sydney,SYD,3515

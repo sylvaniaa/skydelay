@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+*.pyc
+.old_versions/
+.streamlit/secrets.toml
+data/board_cache/
+data/ignav_cache/
+data/kaggle/
+data/raw/*
+!data/raw/bitre_intl/

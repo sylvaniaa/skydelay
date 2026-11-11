@@ -1,0 +1,104 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111418;--blue:#0055A0;--line:#E2E6EC;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:transparent;font-family:'Plus Jakarta Sans',-apple-system,sans-serif;color:var(--ink);}
+.w{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px 22px;}
+.hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.hd b{font-size:20px;font-weight:700;letter-spacing:-.01em;}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#1F7A52;background:#DDF3E8;border-radius:999px;padding:3px 9px;}
+.live i{width:7px;height:7px;border-radius:50%;background:#2C9A69;animation:pulse 1.6s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(44,154,105,.55)}50%{box-shadow:0 0 0 5px rgba(44,154,105,0)}}
+.all{margin-left:auto;font-size:13px;font-weight:700;color:var(--blue);cursor:pointer;}
+.row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;}
+.c{background:#F4F7FA;border-radius:16px;padding:14px;cursor:pointer;transition:transform .15s,box-shadow .15s,background .15s;}
+.c:hover{background:#fff;box-shadow:0 10px 24px rgba(18,40,75,.10);transform:translateY(-2px);}
+.c.in{animation:cin .45s ease both;}
+.c.out{animation:cout .4s ease forwards;pointer-events:none;}
+@keyframes cin{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes cout{to{opacity:0;transform:translateX(-28px)}}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+.tm{font-size:24px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+.cd{font-size:11px;font-weight:700;color:var(--blue);white-space:nowrap;font-variant-numeric:tabular-nums;}
+.cd.now{color:#B42318;}
+.ct{font-size:15px;font-weight:700;margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ct span{font-size:12px;font-weight:600;}
+.al{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;}
+.al img{width:20px;height:20px;object-fit:contain;border-radius:4px;flex:none;}
+.al .al{font-size:10px;}
+.rk{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;font-weight:600;}
+.rk i{width:8px;height:8px;border-radius:50%;flex:none;}
+.none{font-size:14px;font-weight:500;}
+@media (max-width:900px){.row{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:210px;overflow-x:auto;padding-bottom:4px;}}
+@media (prefers-reduced-motion:reduce){.c.in,.c.out,.live i{animation:none !important;}}
+</style></head>
+<body><div id="root"></div>
+<script>
+const send = (type, e) => window.parent.postMessage(Object.assign({isStreamlitMessage: true, type}, e || {}), "*");
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let F = [], shown = [], off = 0, busy = false, timer = null, last = null;
+function fit() { send("streamlit:setFrameHeight", {height: Math.ceil(document.getElementById("root").getBoundingClientRect().height) + 4}); }
+const now = () => Date.now() + off;
+function cd(ms) {
+  if (ms <= 0) return ["Departing now", true];
+  const m = Math.ceil(ms / 60000);
+  if (m < 60) return [`in ${m} min`, false];
+  return [`in ${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")} min`, false];
+}
+function card(f, cls) {
+  const [t, n] = cd(f.t - now());
+  return `<div class="c ${cls}" data-k="${esc(f.k)}"><div class="top"><span class="tm">${esc(f.time)}</span>`
+    + `<span class="cd${n ? " now" : ""}">${t}</span></div>`
+    + `<div class="ct">${esc(f.city)} <span>${esc(f.dest)}</span></div>`
+    + `<div class="al">${f.logo || ""}<span>${esc(f.fl)}</span></div>`
+    + `<div class="rk"><i style="background:${f.color}"></i>${esc(f.risk)}</div></div>`;
+}
+const visible = () => F.filter(f => f.t > now() - 60000).slice(0, 5);
+function draw(anim) {
+  const v = visible(), row = document.querySelector(".row");
+  if (!row) return;
+  row.innerHTML = v.length ? v.map(f => card(f, anim && !shown.includes(f.k) ? "in" : "")).join("")
+                           : '<div class="none">No more scheduled departures in the next hours.</div>';
+  shown = v.map(f => f.k);
+  row.querySelectorAll(".c").forEach(el => el.onclick = () => {
+    const f = F.find(x => x.k === el.dataset.k);
+    if (f) send("streamlit:setComponentValue", {dataType: "json", value: {qp: f.qp, t: Date.now()}});
+  });
+  fit();
+}
+function tick() {
+  if (busy) return;
+  const v = visible().map(f => f.k);
+  if (v.join("|") !== shown.join("|")) {
+    busy = true;
+    document.querySelectorAll(".c").forEach(el => { if (!v.includes(el.dataset.k)) el.classList.add("out"); });
+    setTimeout(() => { busy = false; draw(true); }, 420);
+    return;
+  }
+  document.querySelectorAll(".c").forEach(el => {
+    const f = F.find(x => x.k === el.dataset.k); if (!f) return;
+    const [t, n] = cd(f.t - now()), e = el.querySelector(".cd");
+    e.textContent = t; e.classList.toggle("now", n);
+  });
+}
+function build(d) {
+  F = (d.flights || []).map(f => Object.assign({k: (f.qp.flight || f.fl) + "|" + f.t}, f));
+  off = (d.now_ms || Date.now()) - Date.now();
+  document.getElementById("root").innerHTML =
+    `<div class="w"><div class="hd"><b>Next departures</b><span class="live"><i></i>LIVE SCHEDULE</span>`
+    + `<span class="all" id="all">See all ›</span></div><div class="row"></div></div>`;
+  document.getElementById("all").onclick = () => send("streamlit:setComponentValue", {dataType: "json", value: {qp: d.all_qp, t: Date.now()}});
+  shown = []; draw(true);
+  if (!timer) timer = setInterval(tick, 1000);
+  if (document.fonts) document.fonts.ready.then(fit);
+}
+window.addEventListener("message", e => {
+  const m = e.data; if (!m || m.type !== "streamlit:render") return;
+  const sig = JSON.stringify(m.args.data); if (sig === last) return; last = sig;
+  try { build(m.args.data); } catch (err) { document.getElementById("root").innerHTML = ""; fit(); }
+});
+new ResizeObserver(fit).observe(document.getElementById("root"));
+send("streamlit:componentReady", {apiVersion: 1});
+</script></body></html>
