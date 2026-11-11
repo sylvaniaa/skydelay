@@ -78,7 +78,7 @@ def build_options(codes):
     return out
 
 
-def airport_picker(label, codes, selected, key):
+def airport_picker(label, codes, selected, key, allow_empty=False):
     """Returns (value, list_of_iata_codes, option_dict)."""
     opts = build_options(tuple(codes))
     by_value = {o["value"]: o for o in opts}
@@ -86,7 +86,7 @@ def airport_picker(label, codes, selected, key):
     if prev in by_value:
         selected = prev
     elif selected not in by_value:
-        selected = opts[0]["value"] if opts else None
+        selected = None if allow_empty else (opts[0]["value"] if opts else None)
     v = _picker(label=label, options=opts, selected=selected, key=key, default=None)
     if v in by_value and v != st.session_state.get(key + "__last_v"):
         selected = v

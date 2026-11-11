@@ -982,7 +982,7 @@ def render_flight():
         st.info("No regular flights from here in the schedule.")
         return
     with c2:
-        to_val, d_codes, d_opt = airport_picker("To", dests, qp.get("to") or "LAX", key="to_pick")
+        to_val, d_codes, d_opt = airport_picker("To", dests, qp.get("to") or None, key="to_pick", allow_empty=True)
     try:
         date_def = date.fromisoformat(qp.get("date"))
     except Exception:
@@ -990,6 +990,8 @@ def render_flight():
     with c3:
         st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
         d = st.date_input("Date", value=max(date_def, date.today()), min_value=date.today())
+    if not d_codes:
+        return   # wait until the user picks a destination
 
     flights = []
     for o in o_codes:
