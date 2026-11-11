@@ -78,6 +78,7 @@ mark{background:none;color:#0055A0;}
 
 /* ---------- panel: explore airports ---------- */
 #sheet{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;z-index:10;pointer-events:none;scrollbar-width:none;}
+@media (hover:none),(pointer:coarse){#sheet{pointer-events:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}}
 #sheet::-webkit-scrollbar{display:none;}
 #panel{pointer-events:auto;position:relative;z-index:10;width:calc(100% - 80px);max-width:1400px;margin:72vh auto 0 auto;
   background:#fff;border-radius:28px 28px 0 0;box-shadow:0 -10px 40px rgba(11,31,51,.16);padding:16px 40px 48px 40px;min-height:100vh;
@@ -194,7 +195,6 @@ body.pastland .topnav{background:#12284B;border-color:#12284B;backdrop-filter:no
   <div id="sheet"><div id="landing"><nav class="topnav">
     <span class="tn-b" onclick="document.getElementById('sheet').scrollTo({top:0,behavior:'smooth'})">skydelay</span>
     <a onclick="var sh=document.getElementById('sheet');sh.scrollTo({top:document.getElementById('panel').offsetTop-window.innerHeight*0.62,behavior:'smooth'});try{map.easeTo({padding:{top:110,bottom:Math.round(window.innerHeight*0.38),left:0,right:0},duration:700});}catch(e){}">Airports</a>
-    <a onclick="document.getElementById('sheet').scrollTo({top:0,behavior:'smooth'})">About</a>
     <button class="tn-go" onclick="window.parent.postMessage({isStreamlitMessage:true,type:'streamlit:setComponentValue',dataType:'json',value:{qp:{page:'predict'},t:Date.now()}},'*')">Check a flight</button>
   </nav></div>
   <script>(function(){var sh=document.getElementById("sheet"),ld=document.getElementById("landing");

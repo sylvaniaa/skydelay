@@ -137,7 +137,7 @@ function build(data) {
      <div class="grid"><div><div class="h2"><b>Top destinations</b><span>DAILY DEPARTURES</span></div><div class="ds">${tiles}</div></div>
        <div class="vd"></div><div><div class="h2"><b>Airlines on time</b></div>${rows}</div></div>`;
   if (map) { map.remove(); map = null; }
-  map = L.map("map", {zoomSnap: 0.25, zoomControl: false, scrollWheelZoom: false, attributionControl: true});
+  map = L.map("map", {zoomSnap: 0.25, zoomControl: false, scrollWheelZoom: false, attributionControl: true, dragging: !window.matchMedia("(pointer:coarse)").matches, tap: false});
   L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
     {maxZoom: 16, attribution: "Esri · HERE · Garmin · © OpenStreetMap contributors"}).addTo(map);
   L.control.zoom({position: "bottomright"}).addTo(map);

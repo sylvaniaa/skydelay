@@ -16,7 +16,7 @@ _picker = components.declare_component(
 METRO = {"EWR": ("New York", "New York")}   # code -> (city, region) used for grouping
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def lookup():
     df = pd.read_csv(os.path.join(APP_DIR, "data", "airports_lookup.csv"), keep_default_na=False)
     return df.set_index("iata").to_dict("index")
